@@ -30,6 +30,11 @@ export default function AdminDashboard() {
   // Passcode gate definition
   const CORRECT_PASSCODE = '9036';
 
+  // Dynamic API Base URL detection for Production vs Localhost
+  const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://your-deployed-backend-url.onrender.com'; // Replace this string with your live backend domain later!
+
   // Seed fallbacks for visual presentation if DB offline
   const fallbackAppointments = [
     {
@@ -92,7 +97,7 @@ export default function AdminDashboard() {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/appointments');
+      const response = await fetch(`${API_BASE_URL}/api/appointments`);
       if (!response.ok) throw new Error('API Error');
       const data = await response.json();
       setAppointments(data.length > 0 ? data : fallbackAppointments);
@@ -106,7 +111,7 @@ export default function AdminDashboard() {
 
   const fetchMemberships = async (query = '') => {
     try {
-      const response = await fetch(`http://localhost:5000/api/memberships?search=${encodeURIComponent(query)}`);
+      const response = await fetch(`${API_BASE_URL}/api/memberships?search=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error('API Error');
       const data = await response.json();
       
@@ -148,7 +153,7 @@ export default function AdminDashboard() {
         prev.map(app => app._id === id ? { ...app, status: newStatus } : app)
       );
 
-      const response = await fetch(`http://localhost:5000/api/appointments/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/appointments/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -173,7 +178,7 @@ export default function AdminDashboard() {
 
     setMemberStatus('loading');
     try {
-      const response = await fetch('http://localhost:5000/api/memberships', {
+      const response = await fetch(`${API_BASE_URL}/api/memberships`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -218,7 +223,7 @@ export default function AdminDashboard() {
       // Optimistic update
       setMembers(prev => prev.filter(m => m._id !== id));
       
-      const response = await fetch(`http://localhost:5000/api/memberships/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/memberships/${id}`, {
         method: 'DELETE'
       });
       if (!response.ok) throw new Error('API Error');

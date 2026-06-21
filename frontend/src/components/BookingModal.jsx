@@ -48,7 +48,7 @@ export default function BookingModal() {
 
     setStatus('loading');
     try {
-      const response = await fetch('http://localhost:5001/api/appointments', {
+      const response = await fetch('https://soujanyas-beauty-salon.onrender.com/api/appointments',{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -147,7 +147,7 @@ export default function BookingModal() {
                   name="clientName"
                   value={formData.clientName}
                   onChange={handleChange}
-                  placeholder="e.g. Soujanya Hegde"
+                  placeholder="e.g. your name"
                   className="w-full bg-[#161616] border border-white/5 px-4 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-parlourGold/40 transition-colors font-light"
                   required
                 />
@@ -161,7 +161,7 @@ export default function BookingModal() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="e.g. +91 9343162030"
+                  placeholder="e.g. +91 9876543210"
                   className="w-full bg-[#161616] border border-white/5 px-4 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-parlourGold/40 transition-colors font-light"
                   required
                 />
