@@ -34,6 +34,10 @@ export default function BookingModal() {
     return () => window.removeEventListener('open-booking', handleOpen);
   }, []);
 
+  const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://soujanyas-beauty-salon.onrender.com';
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -48,7 +52,7 @@ export default function BookingModal() {
 
     setStatus('loading');
     try {
-      const response = await fetch('https://soujanyas-beauty-salon.onrender.com/api/appointments',{
+      const response = await fetch(`${API_BASE_URL}/api/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -70,12 +74,8 @@ export default function BookingModal() {
       setStatus('success');
     } catch (err) {
       console.error(err);
-      // Fallback: If backend is offline, simulate success for visual presentation
-      // but warn in console.
-      console.warn('Backend offline. Simulating local mock booking for demo purposes.');
-      setTimeout(() => {
-        setStatus('success');
-      }, 800);
+      setStatus('error');
+      setErrorMessage(err.message || 'Failed to request reservation.');
     }
   };
 

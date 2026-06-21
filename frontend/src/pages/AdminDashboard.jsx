@@ -28,58 +28,12 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Passcode gate definition
-  const CORRECT_PASSCODE = '9036';
+  const CORRECT_PASSCODE = '9343';
 
   // Dynamic API Base URL detection for Production vs Localhost
   const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : 'https://your-deployed-backend-url.onrender.com'; // Replace this string with your live backend domain later!
-
-  // Seed fallbacks for visual presentation if DB offline
-  const fallbackAppointments = [
-    {
-      _id: "demo-1",
-      clientName: "Ananya Deshpande",
-      phone: "+91 98452 10234",
-      service: "Pearl Clean-Up",
-      date: "2026-06-21",
-      time: "11:30",
-      status: "pending"
-    },
-    {
-      _id: "demo-2",
-      clientName: "Priyanka Kulkarni",
-      phone: "+91 94481 92834",
-      service: "Professional Bridal Make-Up Mastery",
-      date: "2026-06-25",
-      time: "10:00",
-      status: "confirmed"
-    },
-    {
-      _id: "demo-3",
-      clientName: "Sneha Patil",
-      phone: "+91 93431 62030",
-      service: "Keratin (Medium)",
-      date: "2026-06-22",
-      time: "15:00",
-      status: "cancelled"
-    }
-  ];
-
-  const fallbackMembers = [
-    {
-      _id: "m-1",
-      clientName: "Rajesh Patil",
-      phone: "+91 93431 62030",
-      registrationDate: "2026-06-19"
-    },
-    {
-      _id: "m-2",
-      clientName: "Sunita Deshpande",
-      phone: "+91 98452 10234",
-      registrationDate: "2026-06-20"
-    }
-  ];
+    : 'https://soujanyas-beauty-salon.onrender.com';
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -96,14 +50,16 @@ export default function AdminDashboard() {
 
   const fetchAppointments = async () => {
     setLoading(true);
+    setError('');
     try {
       const response = await fetch(`${API_BASE_URL}/api/appointments`);
       if (!response.ok) throw new Error('API Error');
       const data = await response.json();
-      setAppointments(data.length > 0 ? data : fallbackAppointments);
+      setAppointments(data);
     } catch (err) {
-      console.warn('Backend server offline. Displaying fallback appointments.');
-      setAppointments(fallbackAppointments);
+      console.error(err);
+      setError('Failed to retrieve active reservations from database.');
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -114,28 +70,10 @@ export default function AdminDashboard() {
       const response = await fetch(`${API_BASE_URL}/api/memberships?search=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error('API Error');
       const data = await response.json();
-      
-      // If we queried a search and nothing returned, filter our mock/fallback array locally
-      if (data.length === 0 && query) {
-        const filtered = fallbackMembers.filter(m => 
-          m.clientName.toLowerCase().includes(query.toLowerCase()) || 
-          m.phone.includes(query)
-        );
-        setMembers(filtered);
-      } else {
-        setMembers(data.length > 0 ? data : fallbackMembers);
-      }
+      setMembers(data);
     } catch (err) {
-      console.warn('Backend server offline. Displaying fallback memberships.');
-      if (query) {
-        const filtered = fallbackMembers.filter(m => 
-          m.clientName.toLowerCase().includes(query.toLowerCase()) || 
-          m.phone.includes(query)
-        );
-        setMembers(filtered);
-      } else {
-        setMembers(fallbackMembers);
-      }
+      console.error(err);
+      setMembers([]);
     }
   };
 
@@ -197,28 +135,15 @@ export default function AdminDashboard() {
       fetchMemberships(searchQuery);
       setTimeout(() => setMemberStatus('idle'), 2500);
     } catch (err) {
-      console.warn('Backend server offline. Adding locally to visual dashboard state.');
-      // Fallback add to mock list locally
-      const mockNewMember = {
-        _id: `m-mock-${Date.now()}`,
-        clientName: memberForm.clientName,
-        phone: memberForm.phone,
-        registrationDate: memberForm.registrationDate
-      };
-      fallbackMembers.unshift(mockNewMember);
-      setMembers([mockNewMember, ...members]);
-      setMemberStatus('success');
-      setMemberForm({
-        clientName: '',
-        phone: '',
-        registrationDate: new Date().toISOString().split('T')[0]
-      });
-      setTimeout(() => setMemberStatus('idle'), 2500);
+      console.error(err);
+      setMemberStatus('error');
+      setTimeout(() => setMemberStatus('idle'), 3000);
     }
   };
 
   const executeDelete = async (id) => {
     setDeletingId(id);
+    const originalMembers = [...members];
     try {
       // Optimistic update
       setMembers(prev => prev.filter(m => m._id !== id));
@@ -229,6 +154,7 @@ export default function AdminDashboard() {
       if (!response.ok) throw new Error('API Error');
     } catch (err) {
       console.error('Optimistic UI delete rollback occurred.');
+      setMembers(originalMembers);
     } finally {
       setDeletingId(null);
       setConfirmDeleteId(null);
@@ -503,6 +429,13 @@ export default function AdminDashboard() {
                   <div className="bg-green-950/20 border border-green-500/30 p-2.5 text-[10px] text-green-400 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>Member registered successfully!</span>
+                  </div>
+                )}
+
+                {memberStatus === 'error' && (
+                  <div className="bg-red-950/20 border border-red-500/30 p-2.5 text-[10px] text-red-400 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Failed to register member. Database connection error.</span>
                   </div>
                 )}
 
